@@ -61,43 +61,35 @@ namespace ConvertCodeFromUTF8
                 ConvertDirctory(i, searchPatterns);
             }
         }
-
-        private const string _pattern = "QStringLiteral\\(\"(?<word>.*?)\"\\)";
-        private const string _format = "QStringLiteral(\"{0}\")";
+        
         private static void ConvertFile(FileInfo fi)
         {
             string src;
             using (StreamReader stream = new StreamReader(fi.OpenRead(), Encoding.UTF8))
             {
                 src = stream.ReadToEnd();
-                stream.Close();
             }
 
-            Dictionary<string, string> changes = new Dictionary<string, string>();
-            var matches = Regex.Matches(src, _pattern);
-            foreach (Match match in matches)
+            StringBuilder builder = new StringBuilder();
+            bool hasChanged = false;
+            foreach (var c in src)
             {
-                if (changes.ContainsKey(match.Value))
+                if ((int)c <= 128)
                 {
-                    continue;
+                    builder.Append(c);
                 }
-
-                string word = match.Groups["word"].Value;
-                string newWord = ConvertString(word);
-                changes[match.Value] = string.Format(_format, newWord);
+                else
+                {
+                    hasChanged = true;
+                    builder.Append(ConvertChar(c));
+                }
             }
 
-            if (changes.Count == 0)
+            if (hasChanged == false)
             {
                 return;
             }
-            
-            StringBuilder builder = new StringBuilder(src);
-            foreach (var i in changes)
-            {
-                builder.Replace(i.Key, i.Value);
-            }
-            
+
             using (StreamWriter stream = new StreamWriter(fi.FullName, false, Encoding.UTF8))
             {
                 stream.Write(builder.ToString());
@@ -105,9 +97,9 @@ namespace ConvertCodeFromUTF8
             }
         }
         
-        private static string ConvertString(string word)
+        private static string ConvertChar(char c)
         {
-            var bytes = Encoding.UTF8.GetBytes(word);
+            var bytes = Encoding.UTF8.GetBytes(new char[] { c });
             StringBuilder res = new StringBuilder();
             foreach (var i in bytes)
             {
