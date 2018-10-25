@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ConvertCodeFromUTF8": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\test\\billmanager *.h *.cpp"
+    }
+  }
+}
